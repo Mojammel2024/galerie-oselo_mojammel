@@ -6,9 +6,9 @@ $password = "";
 
 // Try to connect to the database using PDO
 try { 
-    $conn = new PDO($dsn, $username, $password);  
+    $pdo = new PDO($dsn, $username, $password);  
     // Set PDO to show errors if something goes wrong
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch (PDOException $e) {
     die("Connection error: " . $e->getMessage());
 }
