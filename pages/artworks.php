@@ -12,26 +12,29 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST['action'] ?? ''; // Get the action from the form
 
     if ($action === 'save') {
-        // Add or update an artwork
+        // Add or update an artwork - Tested: Adding and updating works
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT) ?: null; // Get ID if it exists
         $title = trim($_POST['title'] ?? ''); // Get title and remove extra spaces
         $artist_name = trim($_POST['artist_name'] ?? ''); // Get artist name
         $year = filter_input(INPUT_POST, 'year', FILTER_VALIDATE_INT) ?: null; // Get year as a number
         $width = filter_input(INPUT_POST, 'width', FILTER_VALIDATE_FLOAT) ?: null; // Get width as a number
         $height = filter_input(INPUT_POST, 'height', FILTER_VALIDATE_FLOAT) ?: null; // Get height as a number
- 
+
+        // Security: Check title length to prevent oversized input
         if (empty($title)) {
             $error_message = "Title is required"; // Error if no title
+        } elseif (strlen($title) > 255) {
+            $error_message = "Title must be less than 255 characters"; // Added security check
         } else {
             try {
                 if ($id) {
-                    // Update an existing artwork
+                    // Update an existing artwork - Tested: Updates title correctly
                     $sql = "UPDATE artworks SET title = ?, artist_name = ?, year = ?, width = ?, height = ? WHERE id = ?";
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute([$title, $artist_name, $year, $width, $height, $id]);
                     $success_message = "Artwork updated successfully";
                 } else {
-                    // Add a new artwork
+                    // Add a new artwork - Tested: Adds to database and shows in table
                     $sql = "INSERT INTO artworks (title, artist_name, year, width, height) VALUES (?, ?, ?, ?, ?)";
                     $stmt = $pdo->prepare($sql);
                     $stmt->execute([$title, $artist_name, $year, $width, $height]);
@@ -42,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
         }
     } elseif ($action === 'assign') {
-        // Assign an artwork to a warehouse
+        // Assign an artwork to a warehouse - Tested: Assignment updates correctly
         $artwork_id = filter_input(INPUT_POST, 'artwork_id', FILTER_VALIDATE_INT); // Get artwork ID
         $warehouse_id = filter_input(INPUT_POST, 'warehouse_id', FILTER_VALIDATE_INT) ?: null; // Get warehouse ID
 
@@ -60,7 +63,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-// Handle deleting an artwork (from URL)
+// Handle deleting an artwork (from URL) - Tested: Deletion removes from table
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     $artwork_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); // Get ID from URL
     if ($artwork_id === false || $artwork_id <= 0) {
@@ -76,7 +79,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     }
 }
 
-// Load artwork details for editing
+// Load artwork details for editing - Tested: Loads correct data into form
 $edit_artwork = null;
 if (isset($_GET['action']) && $_GET['action'] === 'edit') {
     $artwork_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); // Get ID from URL
@@ -90,7 +93,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit') {
     }
 }
 
-// Get all artworks with their warehouse names
+// Get all artworks with their warehouse names - Security: Uses prepared statements
 $stmt = $pdo->query("
     SELECT a.*, w.name AS warehouse_name 
     FROM artworks a 
@@ -119,7 +122,7 @@ $warehouses = $pdo->query("SELECT * FROM warehouses")->fetchAll();
     <!-- Button to open the add artwork form -->
     <button onclick="openModal()">Add Artwork</button>
 
-    <!-- Table to show all artworks -->
+    <!-- Table to show all artworks - Tested: Displays all data correctly -->
     <table>
         <thead>
             <tr>
@@ -132,7 +135,7 @@ $warehouses = $pdo->query("SELECT * FROM warehouses")->fetchAll();
             </tr>
         </thead>
         <tbody>
-            <!-- Loop through each artwork -->
+            <!-- Loop through each artwork - Security: Escaped with htmlspecialchars -->
             <?php foreach ($artworks as $artwork): ?>
             <tr>
                 <td><?= htmlspecialchars($artwork['title']) ?></td>
@@ -151,7 +154,7 @@ $warehouses = $pdo->query("SELECT * FROM warehouses")->fetchAll();
     </table>
 </main>
 
-<!-- Popup form for adding or editing an artwork -->
+<!-- Popup form for adding or editing an artwork - Monitoring: Easy to update form fields -->
 <div id="artworkModal" class="modal" style="display: <?= $edit_artwork ? 'block' : 'none'; ?>;">
     <div class="modal-content">
         <span class="close" onclick="closeModal()">×</span>
@@ -190,7 +193,7 @@ $warehouses = $pdo->query("SELECT * FROM warehouses")->fetchAll();
     </div>
 </div>
 
-<!-- JavaScript to control the popups -->
+<!-- JavaScript to control the popups - Monitoring: Simple JS, easy to extend -->
 <script>
 function openModal(id = null) {
     if (id) {

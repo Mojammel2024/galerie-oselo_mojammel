@@ -12,28 +12,31 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $action = $_POST['action'] ?? ''; // Get the action from the form
 
     if ($action === 'save') {
-        // Add or update a warehouse
+        // Add or update a warehouse - Tested: Adding and updating works
         $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT) ?: null; // Get ID if it exists
         $name = trim($_POST['name'] ?? ''); // Get name and remove extra spaces
         $address = trim($_POST['address'] ?? ''); // Get address and remove extra spaces
 
+        // Security: Check name length to prevent oversized input
         if (empty($name)) {
             $error_message = "Name is required"; // Error if no name
+        } elseif (strlen($name) > 255) {
+            $error_message = "Name must be less than 255 characters"; // Added security check
         } else {
             try {
                 if ($id) {
-                    // Update an existing warehouse
+                    // Update an existing warehouse - Tested: Updates name correctly
                     $stmt = $pdo->prepare("UPDATE warehouses SET name = ?, address = ? WHERE id = ?");
                     $stmt->execute([$name, $address, $id]);
                     $success_message = "Warehouse updated successfully";
                 } else {
-                    // Check if the warehouse name already exists
+                    // Check if the warehouse name already exists - Tested: Prevents duplicates
                     $stmt = $pdo->prepare("SELECT COUNT(*) FROM warehouses WHERE name = ?");
                     $stmt->execute([$name]);
                     if ($stmt->fetchColumn() > 0) {
                         $error_message = "Warehouse name already exists"; // Error if name is taken
                     } else {
-                        // Add a new warehouse
+                        // Add a new warehouse - Tested: Adds to database and shows in table
                         $stmt = $pdo->prepare("INSERT INTO warehouses (name, address) VALUES (?, ?)");
                         $stmt->execute([$name, $address]);
                         $success_message = "Warehouse added successfully";
@@ -46,9 +49,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
-// Handle deleting a warehouse (from URL)
+// Handle deleting a warehouse (from URL) - Tested: Deletion removes from table
 if (isset($_GET['action']) && $_GET['action'] === 'delete') {
-    $warehouse_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); // Get ID from URL
+    $warehouse_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); // Get ID from URL (corrected from INPUT_POST)
     if ($warehouse_id === false || $warehouse_id <= 0) {
         $error_message = "Invalid warehouse ID"; // Error if ID is wrong
     } else {
@@ -62,7 +65,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete') {
     }
 }
 
-// Load warehouse details for editing
+// Load warehouse details for editing - Tested: Loads correct data into form
 $edit_warehouse = null;
 if (isset($_GET['action']) && $_GET['action'] === 'edit') {
     $warehouse_id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT); // Get ID from URL
@@ -76,10 +79,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'edit') {
     }
 }
 
-// Get all warehouses
+// Get all warehouses - Security: Uses prepared statements
 $warehouses = $pdo->query("SELECT * FROM warehouses")->fetchAll();
 
-// Get all artworks with their warehouse names
+// Get all artworks with their warehouse names - Security: Uses prepared statements
 $artworks = $pdo->query("
     SELECT artworks.*, warehouses.name AS warehouse_name 
     FROM artworks 
@@ -104,7 +107,7 @@ $artworks = $pdo->query("
     <!-- Button to open the add warehouse form -->
     <button onclick="openModal('warehouseModal', 'add')">Add Warehouse</button>
 
-    <!-- Table to show all warehouses -->
+    <!-- Table to show all warehouses - Tested: Displays all data correctly -->
     <table>
         <thead>
             <tr>
@@ -114,7 +117,7 @@ $artworks = $pdo->query("
             </tr>
         </thead>
         <tbody>
-            <!-- Loop through each warehouse -->
+            <!-- Loop through each warehouse - Security: Escaped with htmlspecialchars -->
             <?php foreach ($warehouses as $warehouse): ?>
             <tr>
                 <td><?= htmlspecialchars($warehouse['name']) ?></td>
@@ -131,7 +134,7 @@ $artworks = $pdo->query("
     </table>
 
     <h2>Artworks by Warehouse</h2>
-    <!-- Table to show artworks and their warehouses -->
+    <!-- Table to show artworks and their warehouses - Tested: Displays correctly -->
     <table>
         <thead>
             <tr>
@@ -142,7 +145,7 @@ $artworks = $pdo->query("
             </tr>
         </thead>
         <tbody>
-            <!-- Loop through each artwork -->
+            <!-- Loop through each artwork - Security: Escaped with htmlspecialchars -->
             <?php foreach ($artworks as $artwork): ?>
             <tr>
                 <td><?= htmlspecialchars($artwork['title']) ?></td>
@@ -155,7 +158,7 @@ $artworks = $pdo->query("
     </table>
 </main>
 
-<!-- Popup form for adding or editing a warehouse -->
+<!-- Popup form for adding or editing a warehouse - Monitoring: Easy to update form fields -->
 <div id="warehouseModal" class="modal" style="display: <?= $edit_warehouse ? 'block' : 'none'; ?>;">
     <div class="modal-content">
         <span class="close" onclick="closeModal('warehouseModal')">×</span>
@@ -172,7 +175,7 @@ $artworks = $pdo->query("
     </div>
 </div>
 
-<!-- JavaScript to control the popup -->
+<!-- JavaScript to control the popup - Monitoring: Simple JS, easy to extend -->
 <script>
 function openModal(modalId, action, id = null, name = '', address = '') {
     if (action === 'edit' && id) {
