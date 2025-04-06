@@ -35,21 +35,8 @@ $password = ''; // Your database password
 
 
 
-
-
-## Tests fonctionnels
-- Ajouter une œuvre avec le titre "Mona Lisa", artiste "Da Vinci", année 1503 → Apparaît dans le tableau.
-- Modifier le nom de l’entrepôt de "Stock A" à "Stock B" → Le nom change dans la liste.
-- Supprimer l’œuvre ID 1 → Disparaît du tableau.
-- Assigner une œuvre à un entrepôt → Le nom de l’entrepôt apparaît dans le tableau des œuvres.
-
-## Tests de sécurité
-- Testé XSS : Entré `<script>` dans le titre → S’affiche comme texte, pas de popup.
-- Testé injection SQL : Entré `' OR 1=1` → Pas de fuite de données, erreur affichée.
-
-
-
-## Plan de veille
-- Vérifier les sites de PHP et MySQL tous les mois pour les mises à jour ou correctifs de sécurité.
-- Regarder les tendances d’interface sur des sites comme W3Schools pour améliorer l’application.
-- Corriger les problèmes de sécurité trouvés dans les nouvelles ou forums.
+## Monitoring Plan
+- Check PHP.net and MySQL.com monthly for updates or security patches.
+- Review UI trends on sites like W3Schools to improve the application.
+- Address security issues found in news or forums.
+- Example: If PHP 8.3 is released with a security fix, I’ll update `db_connect.php` to use the new version. If W3Schools suggests a better modal design, I’ll update the JS in `artworks.php`.
